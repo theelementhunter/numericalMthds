@@ -38,25 +38,84 @@
 #   - Once icl is found, we'll call the integrator (we'll have to
 #     change it so that we can specify the indexes for integration
 #     since we have to do forward and backward integration)
-#   -
-#
-#
-#
-#
-#
-#
-#
-
-
 
 
 import numpy as np
 import pandas as pd
 
+## --- USER INPUTS --- ##
+N = 1000 #number of grid points
+n = 3 #number of nodes #nth excited state #CODE STOPS IF n is negative
+x_max = 3
+epsilon = 26 #random energy guess, that is modified using the 'shooting method'
+## --- END --- ##
+
+## --- INITIAL CONDITION SETUP --- ###
+def set_initial_conditions(psi: np.darray, number_of_nodes: int, direction: str,
+                           f_n_initial: np.ndarray, delta_x: float,
+                           number_of_gridpoints: int, xgrid: np.ndarray):
+    f_or_b = direction[0].lower()
+
+    if f_or_b == 'f': #forward integration
+        if number_of_nodes % 2 == 0:  # n ~ even
+            psi[0] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
+            psi[1] = ((12 - (10 * f_n_initial[0])) * psi[0]) / (2 * f_n_initial[1])  # eqn 1.34
+        else:  # n ~ odd
+            psi[0] = 0
+            psi[1] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
+    elif f_or_b == 'b': #backward integration
+        decay_ratio = np.exp( ( (xgrid[-1] ** 2) - (xgrid[-2] ** 2) ) / 2.0 )
+        psi[-1] = delta_x
+        psi[-2] = psi[-1] * decay_ratio
+    else:
+        print("Unknown direction. Pick between 'forward' or 'backward.'")
+
+    return psi
+
+### --- FIND icl POINT --- ###
+def find_icl(epsilon: float, xgrid: np.ndarray):
+    for i, x in enumerate(xgrid):
+
+        #Calculate potential
+        potential = (x ** 2) / 2.0
+
+        #Check if we've hit the forbidden region
+        if potential > epsilon:
+            return i # return the index at which we hit the forbidden region
+    #If we do not ever hit the forbidden region we return the last index in the array
+    return len(xgrid) - 1
 
 
+## --- INTEGRATOR FUNCTION MODIFIED #eqn 1.33 --- ##
+def numerov_integrator(psi: np.ndarray, f_n: np.ndarray, N: int,
+                       direction: str, icl: int):
 
 
+    #different processes and initial conditions for f or b
+    f_or_b = direction[0].lower() #character is lowercase
 
+    if f_or_b == "f":
+        # Forward: Look "behind" (-1), iterate upward
+        k = -1
+        # Start at 2 (ICs set 0 & 1)
+        loop_range = range(2, icl + 1)
+    elif f_or_b == "b":
+        # Backward: Look "ahead" (+1), iterate downward
+        k = +1
+        loop_range = range(N-3, icl -1, -1)
+    else:
+        print("Unknown direction. Pick between 'forward' or 'backward.'")
+    #integrator loop
+    for i in loop_range:
+        prev_1 = i + k
+        prev_2 = i + (2*k)
 
+        var1 = (12 - (10 * f_n[prev_1])) * psi[prev_1]
+        var2 = f_n[prev_2] * psi[prev_2]
 
+        numerator = var1 - var2
+        denominator = f_n[i]
+
+        psi[i] = numerator / denominator
+
+    return psi
