@@ -92,7 +92,7 @@ f_n_initial = f_n(epsilon, x, dx)
 
 if n % 2 == 0: #n ~ even
     psi[0] = 1 #random.randint(1, 10) #arbitrary finite number
-    psi[1] = ( ( 12 - ( 10 * f_n_initial[0] ) ) * psi[0] ) / 2 * f_n_initial[1] #eqn 1.34
+    psi[1] = ( ( 12 - ( 10 * f_n_initial[0] ) ) * psi[0] ) / (2 * f_n_initial[1]) #eqn 1.34
 else: #n ~ odd
     psi[0] = 0
     psi[1] = 1 #arbitrary finite number
