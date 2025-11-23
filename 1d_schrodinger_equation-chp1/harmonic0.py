@@ -67,7 +67,7 @@ def number_of_nodes(psi: np.ndarray):
 
 #using the power of numpy arrays, we get all the g_n and f_n
 #eqn 1.32
-def f_n(epsilon: float, x: float, dx: float):
+def f_n(epsilon: float, x: np.ndarray[], dx: float):
     g_n = (2 * epsilon) - (x** 2)
     f_n = 1 + (g_n * ((dx ** 2) / 12))
     return f_n
