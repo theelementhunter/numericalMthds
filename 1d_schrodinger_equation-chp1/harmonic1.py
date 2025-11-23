@@ -91,9 +91,10 @@ def numerov_integrator(psi: np.ndarray, f_n: np.ndarray, N: int,
                        direction: str, icl: int):
 
 
-    #different processes and initial conditions for f or b
+    # Checking integration direction
     f_or_b = direction[0].lower() #character is lowercase
 
+    # Set up parameters for forward and backward integration
     if f_or_b == "f":
         # Forward: Look "behind" (-1), iterate upward
         k = -1
@@ -105,6 +106,7 @@ def numerov_integrator(psi: np.ndarray, f_n: np.ndarray, N: int,
         loop_range = range(N-3, icl -1, -1)
     else:
         print("Unknown direction. Pick between 'forward' or 'backward.'")
+
     #integrator loop
     for i in loop_range:
         prev_1 = i + k
@@ -119,3 +121,47 @@ def numerov_integrator(psi: np.ndarray, f_n: np.ndarray, N: int,
         psi[i] = numerator / denominator
 
     return psi
+
+#using the power of numpy arrays, we get all the g_n and f_n #eqn 1.32
+#separated g_n and f_n into separate function so that I could use g_n to find icl
+def g_n(epsilon: float, x: np.ndarray):
+    g_n = (2 * epsilon) - (x ** 2)
+    return g_n
+
+def f_n(g_n: np.ndarray, dx: float):
+    f_n = 1 + (g_n * ((dx ** 2) / 12))
+    return f_n
+
+### --- ALT WAY TO FIND icl --- ###
+def find_icl_from_g_n(g_n: np.ndarray):
+    for i, val in enumerate(g_n):
+        if val < 0:
+            return i
+    return len(g_n) - 1
+
+## --- CHECK NUMBER OF NODES FUNCTION --- ##
+##takes in wavefunction
+##returns number of nodes (this is compared to n)
+def number_of_nodes(psi: np.ndarray):
+    node_count = 0
+    for i in range(psi.shape[0] - 1):
+        if (psi[i] > 0 and psi[i+1]) < 0 or (psi[i] < 0 and psi[i+1] > 0):
+            node_count += 1
+        else:
+            continue
+
+    return node_count
+
+#Solution time!
+# There's two energy criteria. In the non-forbidden region we check for the correct number of nodes,
+# and adjust the energy until they matched what we want. This is the forward integration
+# Then we switch to the backward integration. This time the check is the discontinuity condition. We
+# set an energy convergence threshold, and we keep adjusting the energy until the energies at the icl
+# point are below this convergence threshold.
+# We should make a function that takes in the two wavefunctions, the icl, and
+# - Rescales the functions
+# - Checks the discontinuity
+# - returns the continuity value (psi'_R - psi'_L)
+# Then, if the difference is less than or equal to the threshold value we've got the correct energy
+# If the difference is negative the energy is too low it needs to be raised
+# If  "      "       " positive  "    "    "   "  high "   "   "  "  lowered
