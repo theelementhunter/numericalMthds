@@ -148,6 +148,27 @@ def find_number_of_nodes(psi: np.ndarray):
 
     return node_count
 
+### --- SCALING FUNCITON --- ###
+def discontinuity_check(psi_L: np.ndarray, psi_R: np.ndarray, icl: int, delta_x: float, f_n: np.ndarray):
+
+    #infinite discontinuity case (division by zero)
+    if abs(psi_R[icl]) < 1e-15:
+        raise ValueError("Cannot divide by zero. Returning 'infinity' (1e9).")
+        return 1e9
+
+    #rescale psi_R
+    scaling_factor = psi_L[icl] / psi_R[icl]
+    psi_R_scaled = scaling_factor * psi_R
+
+    #check discontinuity #eqn 1.38
+    num1 = psi_L[icl - 1] + psi_R_scaled[icl + 1]
+    num2 = ( 14 - (12 * f_n[icl]) ) * psi_L[icl] #could be psi_L[icl] = psi_R[icl] = psi_i
+    num = num1 - num2
+    denom = delta_x
+
+    difference = num / denom
+
+    return difference, psi_R_scaled
 #Solution time!
 # There's two energy criteria. In the non-forbidden region we check for the correct number of nodes,
 # and adjust the energy until they matched what we want. This is the forward integration
