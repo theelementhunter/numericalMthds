@@ -142,7 +142,7 @@ def find_icl_from_g_n(g_n: np.ndarray):
 ## --- CHECK NUMBER OF NODES FUNCTION --- ##
 ##takes in wavefunction
 ##returns number of nodes (this is compared to n)
-def number_of_nodes(psi: np.ndarray):
+def find_number_of_nodes(psi: np.ndarray):
     node_count = 0
     for i in range(psi.shape[0] - 1):
         if (psi[i] > 0 and psi[i+1]) < 0 or (psi[i] < 0 and psi[i+1] > 0):
