@@ -182,3 +182,36 @@ def discontinuity_check(psi_L: np.ndarray, psi_R: np.ndarray, icl: int, delta_x:
 # Then, if the difference is less than or equal to the threshold value we've got the correct energy
 # If the difference is negative the energy is too low it needs to be raised
 # If  "      "       " positive  "    "    "   "  high "   "   "  "  lowered
+
+### --- USER INPUTS --- ###
+N = 1000 #number of grid points
+number_of_nodes = 3 #number of nodes #nth excited state #CODE STOPS IF n is negative
+x_max = 3
+epsilon = 26 #random energy guess, that is modified using the 'shooting method'
+### --- END --- ###
+
+### --- PSI --- ###
+#create empty array to store wfn solutions
+psi = np.zeros(N, dtype=float)
+
+### --- SPACE DISCRETIZATION & SPACING --- ###
+#discretize a line segment with evenly spaced intervals
+#dx ~ step size ('h' in the numerov formula)
+x, dx = np.linspace(0, x_max, N, retstep=True) # retstep gives us the stepsize
+
+### --- INITIAL ENERGY RANGE --- ###
+#used to try and find the eigenvalue E_n or epsilon_n
+epsilon_range = np.array((0.0,1000.0))
+
+
+### --- INITIAL CONDITIONS --- ###
+
+#initial f_n array
+g_n_initial = g_n(epsilon = epsilon, x = x)
+f_n_initial = f_n(g_n =g_n_initial, dx = dx )
+
+#set initial conditions using full wavefunction, then just separate them
+psi_initial = set_initial_conditions(psi = psi, number_of_nodes = number_of_nodes, f_n_initial=f_n_initial,
+                               delta_x= dx, xgrid = x)
+
+#while energy loop #HOME STRETCH!
