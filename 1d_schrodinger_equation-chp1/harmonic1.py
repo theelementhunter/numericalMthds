@@ -51,24 +51,20 @@ epsilon = 26 #random energy guess, that is modified using the 'shooting method'
 ## --- END --- ##
 
 ## --- INITIAL CONDITION SETUP --- ###
-def set_initial_conditions(psi: np.darray, number_of_nodes: int, direction: str,
-                           f_n_initial: np.ndarray, delta_x: float,
-                           number_of_gridpoints: int, xgrid: np.ndarray):
-    f_or_b = direction[0].lower()
+def set_initial_conditions(psi: np.darray, number_of_nodes: int,
+                           f_n_initial: np.ndarray, delta_x: float, xgrid: np.ndarray):
+    #psi_L initial conditions
+    if number_of_nodes % 2 == 0:  # n ~ even
+        psi[0] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
+        psi[1] = ((12 - (10 * f_n_initial[0])) * psi[0]) / (2 * f_n_initial[1])  # eqn 1.34
+    else:  # n ~ odd
+        psi[0] = 0
+        psi[1] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
 
-    if f_or_b == 'f': #forward integration
-        if number_of_nodes % 2 == 0:  # n ~ even
-            psi[0] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
-            psi[1] = ((12 - (10 * f_n_initial[0])) * psi[0]) / (2 * f_n_initial[1])  # eqn 1.34
-        else:  # n ~ odd
-            psi[0] = 0
-            psi[1] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
-    elif f_or_b == 'b': #backward integration
-        decay_ratio = np.exp( ( (xgrid[-1] ** 2) - (xgrid[-2] ** 2) ) / 2.0 )
-        psi[-1] = delta_x
-        psi[-2] = psi[-1] * decay_ratio
-    else:
-        print("Unknown direction. Pick between 'forward' or 'backward.'")
+    #psi_R initial conditions
+    decay_ratio = np.exp( ( (xgrid[-1] ** 2) - (xgrid[-2] ** 2) ) / 2.0 )
+    psi[-1] = delta_x
+    psi[-2] = psi[-1] * decay_ratio
 
     return psi
 
