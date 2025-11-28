@@ -43,13 +43,6 @@
 import numpy as np
 import pandas as pd
 
-## --- USER INPUTS --- ##
-N = 1000 #number of grid points
-n = 3 #number of nodes #nth excited state #CODE STOPS IF n is negative
-x_max = 3
-epsilon = 26 #random energy guess, that is modified using the 'shooting method'
-## --- END --- ##
-
 ## --- INITIAL CONDITION SETUP --- ###
 def set_initial_conditions(psi: np.ndarray, number_of_nodes: int,
                            f_n_initial: np.ndarray, delta_x: float, xgrid: np.ndarray):
@@ -138,9 +131,9 @@ def find_icl_from_g_n(g_n: np.ndarray):
 ## --- CHECK NUMBER OF NODES FUNCTION --- ##
 ##takes in wavefunction
 ##returns number of nodes (this is compared to n)
-def find_number_of_nodes(psi: np.ndarray):
+def find_number_of_nodes(psi: np.ndarray, icl: int):
     node_count = 0
-    for i in range(psi.shape[0] - 1):
+    for i in range(icl):
         if (psi[i] > 0 and psi[i+1]) < 0 or (psi[i] < 0 and psi[i+1] > 0):
             node_count += 1
         else:
@@ -152,17 +145,17 @@ def find_number_of_nodes(psi: np.ndarray):
 def discontinuity_check(psi_L: np.ndarray, psi_R: np.ndarray, icl: int, delta_x: float, f_n: np.ndarray):
 
     #infinite discontinuity case (division by zero)
-    if abs(psi_R[icl]) < 1e-15:
+    if abs(psi_R[0]) < 1e-15:
         raise ValueError("Cannot divide by zero. Returning 'infinity' (1e9).")
         return 1e9
 
     #rescale psi_R
-    scaling_factor = psi_L[icl] / psi_R[icl]
+    scaling_factor = psi_L[-1] / psi_R[0]
     psi_R_scaled = scaling_factor * psi_R
 
     #check discontinuity #eqn 1.38
-    num1 = psi_L[icl - 1] + psi_R_scaled[icl + 1]
-    num2 = ( 14 - (12 * f_n[icl]) ) * psi_L[icl] #could be psi_L[icl] = psi_R[icl] = psi_i
+    num1 = psi_L[-2] + psi_R_scaled[1]
+    num2 = ( 14 - (12 * f_n[icl]) ) * psi_L[-1]
     num = num1 - num2
     denom = delta_x
 
@@ -185,14 +178,11 @@ def discontinuity_check(psi_L: np.ndarray, psi_R: np.ndarray, icl: int, delta_x:
 
 ### --- USER INPUTS --- ###
 N = 1000 #number of grid points
-number_of_nodes = 3 #number of nodes #nth excited state #CODE STOPS IF n is negative
-x_max = 3
+target_number_of_nodes = 4 #number of nodes #nth excited state #CODE STOPS IF n is negative
+x_max = 7
 epsilon = 26 #random energy guess, that is modified using the 'shooting method'
+convergence = 1e-10 #reasonable for the shooting method
 ### --- END --- ###
-
-### --- PSI --- ###
-#create empty array to store wfn solutions
-psi = np.zeros(N, dtype=float)
 
 ### --- SPACE DISCRETIZATION & SPACING --- ###
 #discretize a line segment with evenly spaced intervals
@@ -201,17 +191,146 @@ x, dx = np.linspace(0, x_max, N, retstep=True) # retstep gives us the stepsize
 
 ### --- INITIAL ENERGY RANGE --- ###
 #used to try and find the eigenvalue E_n or epsilon_n
-epsilon_range = np.array((0.0,1000.0))
+epsilon_range = np.array((0.0,1000.0)) # arbitrarily big range
 
-
-### --- INITIAL CONDITIONS --- ###
-
-#initial f_n array
-g_n_initial = g_n(epsilon = epsilon, x = x)
-f_n_initial = f_n(g_n =g_n_initial, dx = dx )
-
-#set initial conditions using full wavefunction, then just separate them
-psi_initial = set_initial_conditions(psi = psi, number_of_nodes = number_of_nodes, f_n_initial=f_n_initial,
-                               delta_x= dx, xgrid = x)
 
 #while energy loop #HOME STRETCH!
+solution_reached = False
+iteration = 0
+while solution_reached == False:
+    ### ---EPSILON GUESS --- ###
+    epsilon_updated = (epsilon_range[0] + epsilon_range[1]) / 2
+
+    ### --- UPDATER g_n and f_n --- ###
+    g_n_updated = g_n(epsilon = epsilon_updated, x = x)
+    f_n_updated = f_n(g_n =g_n_updated, dx = dx)
+
+    ### --- UPDATE MATCHING POINT --- ###
+    icl_updated = find_icl_from_g_n(g_n = g_n_updated)
+
+    ### --- RE-INIIALIZATION (INITIAL CONDITIONS)--- ###
+    #psi
+    psi = np.zeros(N, dtype=float) # create empty array to store wfn solutions
+    psi_initial = set_initial_conditions(psi=psi, number_of_nodes=target_number_of_nodes,
+                                         f_n_initial=f_n_updated, delta_x=dx, xgrid=x)
+
+    #print(f"psi-initial: {psi_initial}")
+    ### --- FORWARD INTEGRATION --- ###
+    psi_updated = numerov_integrator(psi = psi_initial, f_n = f_n_updated, N = N,
+                                     icl = icl_updated, direction = "forward")
+
+    ### --- FIRST ENERGY CHECK --- ###
+    # We check to see if the energy we have gives us the correct number of nodes in the
+    # classically allowed region
+    number_of_nodes = find_number_of_nodes(psi = psi_updated, icl = icl_updated)
+
+    if number_of_nodes != target_number_of_nodes:
+        if number_of_nodes > target_number_of_nodes:
+            epsilon_range[1] = epsilon_updated
+        elif number_of_nodes < target_number_of_nodes:
+            epsilon_range[0] = epsilon_updated
+        iteration += 1
+        continue
+
+    print(f"Course Energy = {epsilon_updated} @ interaction = {iteration}.")
+    #print(f"Psi: {psi_updated}")
+
+    # if we've made it this far that means we've have the target number of nodes
+    # it also means we can begin the backward integration and the fine energy adjustments
+
+    ### --- EXTRACT psi_L --- ###
+    # we have to do this before the backward integration, otherwise we will overwrite the icl
+    # position
+    psi_L = psi_updated[: icl_updated + 1].copy() #beginning -> icl
+
+    ### --- BACKWARD INTEGRATION --- ###
+    psi_updated = numerov_integrator(psi = psi_updated, f_n = f_n_updated, N = N,
+                                     icl = icl_updated, direction = "backward")
+
+    ### --- EXTRACT psi_R --- ###
+    psi_R = psi_updated[icl_updated :] #icl -> end
+
+    ### --- CHECK DISCONTINUITY --- ###
+    diff = discontinuity_check(psi_L = psi_L, psi_R=psi_R, icl = icl_updated,
+                               delta_x = dx, f_n = f_n_updated)
+
+    print(f"Difference = {diff[0]}")
+
+    if (epsilon_range[1] - epsilon_range[0]) > convergence:
+        if diff[0] < 0:
+            epsilon_range[0] = epsilon_updated
+        else:
+            epsilon_range[1] = epsilon_updated
+        iteration += 1
+        continue
+    else:
+        print(f"Fine Energy = {epsilon_updated} @ interaction = {iteration}.")
+        #print(f"Psi: {psi_updated}")
+        solution_reached = True
+
+print(f"Solution took {iteration} iterations.")
+
+print("\n--- Finalizing Solution ---")
+#We generate clean psi_L and psi_R
+g_final = g_n(epsilon = epsilon_updated, x = x)
+f_final = f_n(g_n = g_final, dx = dx)
+icl_final = find_icl_from_g_n(g_n = g_final)
+
+### --- FORWARD --- ###
+psi_final = np.zeros(N, dtype=float)
+psi_initial = set_initial_conditions(psi=psi_final, number_of_nodes=target_number_of_nodes,
+                                         f_n_initial=f_final, delta_x=dx, xgrid=x)
+
+psi = numerov_integrator(psi = psi_initial, f_n = f_final, N = N,
+                                     icl = icl_final, direction = "forward")
+psi_L = psi[:icl_final +1].copy()
+
+### --- BACKWARD --- ###
+psi = numerov_integrator(psi = psi_initial, f_n = f_final, N = N,
+                                     icl = icl_final, direction = "backward")
+psi_R = psi[icl_final:].copy()
+
+
+### --- RESCALE RIGHT TO TOUCH LEFT --- ###
+scaling_factor = psi_L[-1] / psi_R[0]
+psi_R_scaled = psi_R * scaling_factor
+
+### --- STITCHING RIGHT AND LEFT --- ###
+# psi_L ends at 'icl'. psi_R_scaled starts at 'icl'.
+# We assume psi_L[-1] == psi_R_scaled[0] (we just forced it).
+# So we take all of L, and everything from R *except* the first point (to avoid duplicates).
+psi_final = np.concatenate((psi_L, psi_R_scaled[1:]))
+
+### --- NORMALIZATION --- ###
+# Calculate the Integral of |psi|^2 dx
+# (Simple Riemann sum is sufficient for this grid density)
+probability_density = psi_final ** 2
+area = np.sum(probability_density) * dx
+
+# Calculate normalization constant A = 1 / sqrt(Area)
+norm_constant = 1.0 / np.sqrt(area)
+
+# Apply it
+psi_normalized = psi_final * norm_constant
+prob_density_normalized = psi_normalized ** 2
+
+print(f"Normalization Complete. Total Area = {np.sum(prob_density_normalized) * dx:.5f}")
+
+
+# 5. PLOTTING
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+plt.plot(x, psi_normalized, label=f'n={target_number_of_nodes}, E={epsilon:.4f}')
+plt.xlabel('Position (x)')
+plt.ylabel('Psi')
+plt.title(f'Harmonic Oscillator (n={target_number_of_nodes})')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
+
+
+
+
