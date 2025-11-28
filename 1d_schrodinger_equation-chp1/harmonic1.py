@@ -44,15 +44,15 @@ import numpy as np
 import pandas as pd
 
 ## --- INITIAL CONDITION SETUP --- ###
-def set_initial_conditions(psi: np.ndarray, number_of_nodes: int,
+def set_initial_conditions(psi: np.ndarray, quantum_number: int,
                            f_n_initial: np.ndarray, delta_x: float, xgrid: np.ndarray):
     #psi_L initial conditions
-    if number_of_nodes % 2 == 0:  # n ~ even
-        psi[0] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
+    if quantum_number % 2 == 0:  # n ~ even
+        psi[0] = 0.1  # can be any arbitrary finite number, we choose 1 for simplicity
         psi[1] = ((12 - (10 * f_n_initial[0])) * psi[0]) / (2 * f_n_initial[1])  # eqn 1.34
     else:  # n ~ odd
         psi[0] = 0
-        psi[1] = 1  # can be any arbitrary finite number, we choose 1 for simplicity
+        psi[1] = 0.1  # can be any arbitrary finite number, we choose 0.1 for simplicity
 
     #psi_R initial conditions
     decay_ratio = np.exp( ( (xgrid[-1] ** 2) - (xgrid[-2] ** 2) ) / 2.0 )
@@ -161,6 +161,13 @@ def discontinuity_check(psi_L: np.ndarray, psi_R: np.ndarray, icl: int, delta_x:
 
     difference = num / denom
 
+    # standardization of the sign of the difference
+    # if we are below the x axis, we get a negative error even though the energy is too high
+    # this makes sure the bisection method is always taking in a positive value if the energy is too and
+    # and not being affected by the physical sign flip for the energy being too high above vs below the x axis
+    if psi_L[-1] < 0:
+        difference = -difference
+
     return difference, psi_R_scaled
 #Solution time!
 # There's two energy criteria. In the non-forbidden region we check for the correct number of nodes,
@@ -178,11 +185,21 @@ def discontinuity_check(psi_L: np.ndarray, psi_R: np.ndarray, icl: int, delta_x:
 
 ### --- USER INPUTS --- ###
 N = 1000 #number of grid points
-target_number_of_nodes = 4 #number of nodes #nth excited state #CODE STOPS IF n is negative
+n_quantum_number = 2 #number of nodes #nth excited state #CODE STOPS IF n is negative
 x_max = 7
-epsilon = 26 #random energy guess, that is modified using the 'shooting method'
+epsilon = 5 #random energy guess, that is modified using the 'shooting method'
 convergence = 1e-10 #reasonable for the shooting method
 ### --- END --- ###
+
+### --- CALCULATE TARGET NODES AUTOMATICALLY --- ###
+if n_quantum_number % 2 == 0:
+    target_number_of_nodes = n_quantum_number // 2
+else:
+    target_number_of_nodes = (n_quantum_number - 1) // 2
+
+print(f"Solving for Quantum n={n_quantum_number}")
+print(f"Target Nodes in half-space: {target_number_of_nodes}")
+
 
 ### --- SPACE DISCRETIZATION & SPACING --- ###
 #discretize a line segment with evenly spaced intervals
@@ -191,7 +208,7 @@ x, dx = np.linspace(0, x_max, N, retstep=True) # retstep gives us the stepsize
 
 ### --- INITIAL ENERGY RANGE --- ###
 #used to try and find the eigenvalue E_n or epsilon_n
-epsilon_range = np.array((0.0,1000.0)) # arbitrarily big range
+epsilon_range = np.array((0.0,10.0)) # arbitrarily big range
 
 
 #while energy loop #HOME STRETCH!
@@ -211,7 +228,7 @@ while solution_reached == False:
     ### --- RE-INIIALIZATION (INITIAL CONDITIONS)--- ###
     #psi
     psi = np.zeros(N, dtype=float) # create empty array to store wfn solutions
-    psi_initial = set_initial_conditions(psi=psi, number_of_nodes=target_number_of_nodes,
+    psi_initial = set_initial_conditions(psi=psi, quantum_number = n_quantum_number,
                                          f_n_initial=f_n_updated, delta_x=dx, xgrid=x)
 
     #print(f"psi-initial: {psi_initial}")
@@ -232,7 +249,7 @@ while solution_reached == False:
         iteration += 1
         continue
 
-    print(f"Course Energy = {epsilon_updated} @ interaction = {iteration}.")
+    #print(f"Course Energy = {epsilon_updated} @ interaction = {iteration}.")
     #print(f"Psi: {psi_updated}")
 
     # if we've made it this far that means we've have the target number of nodes
@@ -254,7 +271,7 @@ while solution_reached == False:
     diff = discontinuity_check(psi_L = psi_L, psi_R=psi_R, icl = icl_updated,
                                delta_x = dx, f_n = f_n_updated)
 
-    print(f"Difference = {diff[0]}")
+    #print(f"Difference = {diff[0]}")
 
     if (epsilon_range[1] - epsilon_range[0]) > convergence:
         if diff[0] < 0:
@@ -264,7 +281,7 @@ while solution_reached == False:
         iteration += 1
         continue
     else:
-        print(f"Fine Energy = {epsilon_updated} @ interaction = {iteration}.")
+        #print(f"Fine Energy = {epsilon_updated} @ interaction = {iteration}.")
         #print(f"Psi: {psi_updated}")
         solution_reached = True
 
@@ -278,7 +295,7 @@ icl_final = find_icl_from_g_n(g_n = g_final)
 
 ### --- FORWARD --- ###
 psi_final = np.zeros(N, dtype=float)
-psi_initial = set_initial_conditions(psi=psi_final, number_of_nodes=target_number_of_nodes,
+psi_initial = set_initial_conditions(psi=psi_final, quantum_number=n_quantum_number,
                                          f_n_initial=f_final, delta_x=dx, xgrid=x)
 
 psi = numerov_integrator(psi = psi_initial, f_n = f_final, N = N,
@@ -319,13 +336,34 @@ print(f"Normalization Complete. Total Area = {np.sum(prob_density_normalized) * 
 
 # 5. PLOTTING
 import matplotlib.pyplot as plt
+# Create the full arrays
+x_full = np.concatenate((-x[::-1], x))  # -x (reversed) + x
+if n_quantum_number % 2 == 0:
+    psi_full = np.concatenate((psi_normalized[::-1], psi_normalized)) # Even parity (symmetric)
+else:
+    psi_full = np.concatenate((-psi_normalized[::-1], psi_normalized)) # Odd parity (anti-symmetric)
+
+# Plot the FULL universe
+plt.plot(x_full, psi_full)
 
 plt.figure(figsize=(10, 6))
-plt.plot(x, psi_normalized, label=f'n={target_number_of_nodes}, E={epsilon:.4f}')
+#plot half the universe
+#plt.plot(x, psi_normalized, label=f'n={n_quantum_number}, E={epsilon_updated:.4f}')
+# Plot the FULL universe
+plt.plot(x_full, psi_full, label=f'n={n_quantum_number}, E={epsilon_updated:.4f}')
 plt.xlabel('Position (x)')
 plt.ylabel('Psi')
-plt.title(f'Harmonic Oscillator (n={target_number_of_nodes})')
+plt.title(f'Harmonic Oscillator (n={n_quantum_number})')
 plt.grid(True)
+# 1. Calculate the turning point
+# (We only need the positive one since your grid is x > 0)
+turning_point = np.sqrt(2 * epsilon_updated)
+
+# 2. Add the vertical line
+plt.axvline(x=turning_point, color='red', linestyle='--', label='Classical Turning Point')
+plt.axvline(x=-turning_point, color='red', linestyle='--')
+# Optional: Add text annotation so you know what it is
+plt.text(turning_point + 0.1, 0.1, 'Forbidden Region \u2192', color='red', rotation=90)
 plt.legend()
 plt.show()
 
