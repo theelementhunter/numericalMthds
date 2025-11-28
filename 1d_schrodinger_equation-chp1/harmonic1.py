@@ -41,6 +41,7 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 
 ## --- INITIAL CONDITION SETUP --- ###
@@ -334,38 +335,54 @@ prob_density_normalized = psi_normalized ** 2
 print(f"Normalization Complete. Total Area = {np.sum(prob_density_normalized) * dx:.5f}")
 
 
-# 5. PLOTTING
-import matplotlib.pyplot as plt
-# Create the full arrays
+### --- PLOTTING --- ###
+
+### --- CREATE FULL WAVEFUNCITON -inf <x< +inf--- ###
 x_full = np.concatenate((-x[::-1], x))  # -x (reversed) + x
 if n_quantum_number % 2 == 0:
     psi_full = np.concatenate((psi_normalized[::-1], psi_normalized)) # Even parity (symmetric)
 else:
     psi_full = np.concatenate((-psi_normalized[::-1], psi_normalized)) # Odd parity (anti-symmetric)
 
-# Plot the FULL universe
-plt.plot(x_full, psi_full)
+### --- CALC CLASSICAL TURNING POINT --- ###
+# (We only need the positive one since your grid is x > 0)
+turning_point = np.sqrt(2 * epsilon_updated)
 
-plt.figure(figsize=(10, 6))
-#plot half the universe
+
+
+#Plot HALF the universe
 #plt.plot(x, psi_normalized, label=f'n={n_quantum_number}, E={epsilon_updated:.4f}')
-# Plot the FULL universe
+
+### --- PSI PLOTTING --- ###
+plt.figure(figsize=(10, 6))
 plt.plot(x_full, psi_full, label=f'n={n_quantum_number}, E={epsilon_updated:.4f}')
 plt.xlabel('Position (x)')
 plt.ylabel('Psi')
 plt.title(f'Harmonic Oscillator (n={n_quantum_number})')
 plt.grid(True)
-# 1. Calculate the turning point
-# (We only need the positive one since your grid is x > 0)
-turning_point = np.sqrt(2 * epsilon_updated)
-
-# 2. Add the vertical line
 plt.axvline(x=turning_point, color='red', linestyle='--', label='Classical Turning Point')
 plt.axvline(x=-turning_point, color='red', linestyle='--')
-# Optional: Add text annotation so you know what it is
 plt.text(turning_point + 0.1, 0.1, 'Forbidden Region \u2192', color='red', rotation=90)
 plt.legend()
+plt.savefig(f'harmonic_oscillator_psi_n={n_quantum_number}_harmonic1.png')
 plt.show()
+
+
+### --- PSI PLOTTING --- ###
+psi_squared = psi_full ** 2
+plt.figure(figsize=(10, 6))
+plt.plot(x_full, psi_squared, label=f'n={n_quantum_number}, E={epsilon_updated:.4f}')
+plt.xlabel('Position (x)')
+plt.ylabel('|Psi|^2')
+plt.title(f'Harmonic Oscillator (n={n_quantum_number})')
+plt.grid(True)
+plt.axvline(x=turning_point, color='red', linestyle='--', label='Classical Turning Point')
+plt.axvline(x=-turning_point, color='red', linestyle='--')
+plt.text(turning_point + 0.1, 0.1, 'Forbidden Region \u2192', color='red', rotation=90)
+plt.legend()
+plt.savefig(f'harmonic_oscillator_|psi|^2_n={n_quantum_number}_harmonic1.png')
+plt.show()
+
 
 
 
