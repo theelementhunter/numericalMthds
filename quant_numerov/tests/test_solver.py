@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from quant_numerov.src.numerov_schrod_eqn.potentials import HarmonicOscillator
-from quant_numerov.src.numerov_schrod_eqn.solver import NumerovSolver
+from numerov_schrod_eqn.potentials import HarmonicOscillator
+from numerov_schrod_eqn.solver import NumerovSolver
 
 
 def test_harmonic_first_excited_state():
