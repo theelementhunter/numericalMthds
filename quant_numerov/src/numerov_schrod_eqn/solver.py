@@ -9,6 +9,7 @@ class QuantumState:
     energy: float
     psi: np.ndarray
     nodes: int
+    parity: str
 
 """
 @dataclass autogenerates the class below behind the scenes
@@ -121,24 +122,51 @@ class NumerovSolver:
 
         return psi, icl, diff
 
-    def _count_nodes(self, psi: np.ndarray) -> int:
-        return len(np.where(np.diff(np.signbit(psi)))[0])
+    def _count_nodes(self, psi: np.ndarray, icl: int) -> int:
+        #Counts nodes in classically allowed region (0 to icl)
+        segment = psi[:icl+1]
+        return len(np.where(np.diff(np.signbit(segment)))[0]) #a little single line magick
 
     #Bisection Method
     def solve(self, n_target: int) -> QuantumState:
-        E_min, E_max = 0.0, 10.0
+        #Determine Parity
+        parity = "even" if n_target % 2 == 0 else "odd"
+        target_nodes = n_target // 2 #Nodes in half-space
 
-        for _ in range(100):
+        #Course Energy Search
+        E_min, E_max = 0.0, 20.0 #Wide energy range
+        E_guess = 0.0
+
+        for _ in range(50):
             E_guess = (E_min + E_max) / 2.0
-            psi = self._integrate(E_guess)
-            nodes = self._count_nodes(psi)
+            psi, icl, diff= self._integrate(E_guess, parity)
+            nodes = self._count_nodes(psi, icl)
 
-            if nodes == n_target:
-                norm = np.sqrt(np.sum(psi**2) * self.dx)
-                return QuantumState(E_guess, psi / norm, nodes)
-            elif nodes > n_target:
+            if nodes > target_nodes:
+                E_max = E_guess
+            elif nodes < target_nodes:
+                E_min = E_guess
+            else:
+                #Correct number of nodes
+                #Break to start Fine Energy Search
+                break
+
+        #Fine Energy Search
+        for _ in range(50):
+            E_guess = (E_min + E_max) / 2.0
+            psi, icl, diff = self._integrate(E_guess, parity)
+
+            #Check Convergence
+            if abs(E_max - E_min) < 1e-10
+                break
+
+            #Continuity Check
+            if diff > 0:
                 E_max = E_guess
             else:
                 E_min = E_guess
 
-        raise RuntimeError("Could not converge on energy.")
+        #Finalize Solm
+        norm = np.sqrt(np.sum(psi**2) * self.dx)
+
+        return QuantumState(energy = E_guess, psi = psi / norm, nodes = target_nodes, parity = parity)
