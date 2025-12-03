@@ -51,16 +51,16 @@ class NumerovSolver:
         if parity == "odd":
             #Odd Parrity: Node at origin -> psi[0] = 0
             psi_0 = 0.0
-            psi_1 = 1e-5
+            psi_1 = 0.1
         else:
             #Even Parity: Slope is zero at origin;
             #Thus psi[0] can be any arbitrary non-zero number
-            psi_0 = 1e-5
+            psi_0 = 0.1
             #Eqn 1.34; Numerov Expansion for zero slope
             psi_1 = ((12 - 10 * f_n[0]) * psi_0) / (2 * f_n[1])
 
         #Backward Integration
-        psi_2 = 1e-5
+        psi_2 = 0.1
         psi_3 = psi_2 * np.exp((self.x[-1]**2 - self.x[-2]**2)/2)
 
         return psi_0, psi_1, psi_2, psi_3
@@ -131,42 +131,43 @@ class NumerovSolver:
     def solve(self, n_target: int) -> QuantumState:
         #Determine Parity
         parity = "even" if n_target % 2 == 0 else "odd"
-        target_nodes = n_target // 2 #Nodes in half-space
+        #target_nodes = n_target // 2 #Nodes in half-space
+
+        if parity == "even":
+            target_nodes = n_target // 2
+        else:
+            target_nodes = (n_target - 1) // 2
 
         #Course Energy Search
         E_min, E_max = 0.0, 20.0 #Wide energy range
-        E_guess = 0.0
+        E_guess = 5.0
 
-        for _ in range(50):
-            E_guess = (E_min + E_max) / 2.0
-            psi, icl, diff= self._integrate(E_guess, parity)
-            nodes = self._count_nodes(psi, icl)
-
-            if nodes > target_nodes:
-                E_max = E_guess
-            elif nodes < target_nodes:
-                E_min = E_guess
-            else:
-                #Correct number of nodes
-                #Break to start Fine Energy Search
-                break
-
-        #Fine Energy Search
-        for _ in range(50):
+        for _ in range(100):
             E_guess = (E_min + E_max) / 2.0
             psi, icl, diff = self._integrate(E_guess, parity)
+            nodes = self._count_nodes(psi, icl)
+
+            #Coarse Energy Check
+            if nodes != target_nodes:
+                if nodes > target_nodes:
+                    E_max = E_guess  # Too much energy
+                else:
+                    E_min = E_guess  # Too little energy
+                continue  # Skip the Fine Check logic this turn
+
+            #Fine Check
 
             #Check Convergence
-            if abs(E_max - E_min) < 1e-10
-                break
+            if abs(E_max - E_min) < 1e-10:
+                #Soln Found
+                #Finalize Soln
+                norm = np.sqrt(np.sum(psi**2) * self.dx)
+                return QuantumState(energy=E_guess, psi=psi / norm, nodes=target_nodes, parity=parity)
 
-            #Continuity Check
-            if diff > 0:
-                E_max = E_guess
-            else:
+            #If Soln is not Converged
+            if diff < 0:
                 E_min = E_guess
+            else:
+                E_max = E_guess
 
-        #Finalize Solm
-        norm = np.sqrt(np.sum(psi**2) * self.dx)
-
-        return QuantumState(energy = E_guess, psi = psi / norm, nodes = target_nodes, parity = parity)
+        raise RuntimeError("Could not converge solution.")
