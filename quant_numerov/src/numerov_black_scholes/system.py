@@ -2,7 +2,7 @@ import numpy as np
 from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
-class black_scholes_system():
+class BlackScholesSystem():
     L: int                                   # Length of "Bar"
     dt: float                                # Timestep
     N_points: int                            # Number of Points in the Grid
