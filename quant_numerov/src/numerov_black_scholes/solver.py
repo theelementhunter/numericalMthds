@@ -8,7 +8,7 @@ from numerov_black_scholes.system import BlackScholesSystem
 class NumerovBackwardEulerSolver():
     def __init__(self, BSS: BlackScholesSystem, alpha: float = 1.0):
         self.sys = BSS
-        self.A = alpha
+        self.alpha = alpha
         self.M , self.K = self._build_matrices()
 
         # Operator 'A'
