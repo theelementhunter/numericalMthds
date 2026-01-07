@@ -16,7 +16,7 @@ class NumerovBackwardEulerSolver():
         self.A = self.M - (self.alpha * self.sys.dt * self.K)
 
         # (LU Decomposition)
-        self.solve_A = sp.linalg.factorized(self.A)
+        self.solve_A = sp.linalg.factorized(self.A.tocsc())
 
     def _build_matrices(self):
         """
