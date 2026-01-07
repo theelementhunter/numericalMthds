@@ -46,7 +46,7 @@ class NumerovBackwardEulerSolver():
 
         M = M_matrix / 12
 
-        return K, M
+        return M, K
 
     def step(self, u_curr):
         # 1 Project current state (RHS)
