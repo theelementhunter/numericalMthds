@@ -19,10 +19,18 @@ class SimulationRunner:
         # Starting "snapshot"
         self.history.append((self.t, self.u_curr.copy()))
 
+        # ZeroDivisionError fix
+        save_interval = max(1, steps // 10)
+
+        print(f"Starting silulation: {steps} steps...")
+
         # THE LOOP: "Start walking."
         for n in range(steps):
             self.u_curr = self.solver.step(self.u_curr)
             self.t += self.sys.dt
 
-            if n % (steps // 10) == 0:
+            if n % save_interval == 0:
                 self.history.append((self.t, self.u_curr.copy()))
+
+        self.history.append((self.t, self.u_curr.copy()))
+        print("Simulation complete.")
