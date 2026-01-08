@@ -4,6 +4,7 @@ from numerov_black_scholes.solver import NumerovBackwardEulerSolver
 from numerov_black_scholes.state import SimulationRunner
 from numerov_black_scholes.analytics import black_scholes_call
 from numerov_black_scholes.visualization import plot_price_comparison
+from numerov_black_scholes.visualization import plot_error_convergence
 
 def get_put_payoff(x_grid, K):
     """
@@ -16,16 +17,16 @@ def get_put_payoff(x_grid, K):
 
 if __name__ == '__main__':
     # --- Configuration --- #
-    S0 = 100.0    # Spot Price
-    K = 100.0     # Strike Price
-    r = 0.05      # Risk-free Rate
-    sigma = 0.2   # Volatility
-    T = 1.0       # Maturity
+    S0 = 100.0             # Spot Price
+    K = 100.0              # Strike Price
+    sigma = 0.2            # Volatility
+    r = 0.5 * sigma**2     # Risk-free Rate # Accounts for Black-Scholes drift (r - 0.5*sigma**2)
+    T = 1.0                # Maturity
 
     # Grid Parameters
     # L=6.0 covers approx +/- 3 sigma in log-space
-    L = 6.0
-    N = 201
+    L = 14.0
+    N = 401
     dt = 0.001
 
     # --- Setup --- #
@@ -67,8 +68,8 @@ if __name__ == '__main__':
     plot_price_comparison(
         S_grid=S_grid,
         numerical_price=call_price_numerical,
-        analysical_price=call_price_analytical,
-        title=f"Numerove Pricing (N={N})"
+        analytical_price=call_price_analytical,
+        title=f"Numerov Pricing (N={N})"
     )
 
     # Output specific check
