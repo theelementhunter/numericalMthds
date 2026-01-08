@@ -18,11 +18,15 @@ def plot_price_comparison(S_grid, numerical_price, analysical_price, title="Opti
     plt.grid(True, linestyle=':', alpha=0.6)
 
     # Focus view on relevant area (At-The-Money)
-    # Assuming S roughly centered around Strike
-    center_idx = len(S_grid) // 2
-    center_S = S_grid[center_idx]
-    plt.xlim(center_S * 0.5, center_S * 1.5)
-    plt.ylim(bottom=-5)
+    # We use the Strike Price (K) as the anchor, not the grid center
+    # This ensures the "action" is always in the middle of the plot.
+
+    # Assuming you pass 'K' into this function or derive it from S_grid
+    # If K is not available, using the median of S_grid is a safe fallback:
+    K_approx = np.median(S_grid)
+
+    plt.xlim(K_approx * 0.5, K_approx * 1.5)  # View +/- 50% around Strike
+    plt.ylim(0, K_approx * 0.6)  # Y-axis typically needs less room than X
 
     plt.tight_layout()
     plt.show()
