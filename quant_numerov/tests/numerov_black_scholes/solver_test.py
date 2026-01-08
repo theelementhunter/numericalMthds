@@ -73,7 +73,7 @@ def test_step_identity_check():
     # u_next should be identical to u_curr
     np.testing.assert_array_almost_equal(u_next, u_curr)
 
-def test_step_diffuation():
+def test_step_diffusion():
     """
     Does the tep actually diffuse (Smoothing test)?
     If we've a spike [0,1,0], it should spread our and lower in peak.
