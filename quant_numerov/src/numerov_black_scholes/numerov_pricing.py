@@ -39,9 +39,17 @@ if __name__ == '__main__':
 
     # --- Initial Conditions --- #
     # We solve for a Put (decaying boundary)
+    # We are solving for the TRANSFORMED variable U(x, tau)
+    # V(x, tau) = exp(-r * tau) * U(x, tau)
+    # At tau=0, V = U.
+
     u0 = get_put_payoff(sys.x_grid, K)
-    # Enforcing the boundaries
-    u0[0] = K * np.exp(-r * T); u0[-1] =0.0
+
+    # Boundary Conditions for U are STATIC:
+    # Left (S=0): The Put is worth K * exp(-r*tau).
+    # Since U = V * exp(r*tau), U_left = K.
+    u0[0] = K
+    u0[-1] = 0.0
 
     # --- Execution --- #
     runner = SimulationRunner(sys, solver, u0)
@@ -50,14 +58,17 @@ if __name__ == '__main__':
 
     # --- Post-Processing
     # Extract final raw solution u(x,T)
-    _, u_final = runner.history[-1]
+    _, u_final_transformed = runner.history[-1]
+
+    # Applying discount factor
+    # We transform U back to Price V
+    put_price_numerical = u_final_transformed * np.exp(-r * T)
 
     # Recover Stock Prices: S = K * exp(x)
     S_grid = K * np.exp(sys.x_grid)
 
-    # Conver Put to Call using Parity (Call = Put + S - K*e^-rT)
+    # Convert Put to Call using Parity (Call = Put + S - K*e^-rT)
     # Note: u_final is the Put price  (assuming purely diffusive approx. for this stage)
-    put_price_numerical = u_final
     call_price_numerical = put_price_numerical + S_grid - K * np.exp(-r*T)
 
     # Benchmark
