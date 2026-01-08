@@ -22,11 +22,22 @@ class SimulationRunner:
         # ZeroDivisionError fix
         save_interval = max(1, steps // 10)
 
-        print(f"Starting silulation: {steps} steps...")
+        print(f"Starting simulation: {steps} steps...")
+
+        # Grab boundary values from the Initial Condition
+        # We assume they are static (Constant) for the transformed variable U
+        bc_left = self.u_curr[0]
+        bc_right = self.u_curr[-1]
 
         # THE LOOP: "Start walking."
         for n in range(steps):
-            self.u_curr = self.solver.step(self.u_curr)
+            # Pass the boundaries explicitly!
+            self.u_curr = self.solver.step(
+                self.u_curr,
+                boundary_left=bc_left,
+                boundary_right=bc_right
+            )
+
             self.t += self.sys.dt
 
             if n % save_interval == 0:
