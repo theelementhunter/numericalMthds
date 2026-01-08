@@ -6,7 +6,7 @@ def plot_price_comparison(S_grid, numerical_price, analytical_price, title="Opti
     plt.figure(figsize=(10,6))
 
     # Plot Analytical Line
-    plt.plot(S_grid, numerical_price, "k-", linewidth=1.5, label="Analytical BS (Exact)")
+    plt.plot(S_grid, analytical_price, "k-", linewidth=1.5, label="Analytical BS (Exact)")
 
     # Plot Numerical Dots (every 10th point to show discrete nature)
     plt.plot(S_grid, numerical_price, "r--", marker="o", markevery=10, alpha=0.8, label="Numerov (Calculated)")
