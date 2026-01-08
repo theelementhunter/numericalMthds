@@ -46,11 +46,39 @@ class NumerovBackwardEulerSolver():
 
         M = M_matrix / 12
 
-        return M, K
+        # --- Clamp Boundaries --- #
+        # We convert to LIL format briefly because it's efficient for
+        # modifying individual entries.
+        K = K.tolil()
+        M = M.tolil()
 
-    def step(self, u_curr):
+        # Zero out the first and last rows
+        K[0, :] = 0;
+        K[-1, :] = 0
+        M[0, :] = 0;
+        M[-1, :] = 0
+
+        # Enforce Identity: 1 * u_next = 1 * u_curr
+        # This ensures the boundary equation is just u_new = u_old (static)
+        M[0, 0] = 1.0;
+        M[-1, -1] = 1.0
+
+        # Note: We leave K as zeros on the boundary rows because
+        # the equation is M*u_next - alpha*dt*K*u_next = M*u_curr
+        # If K is 0 and M is I, it reduces to I*u_next = I*u_curr.
+
+        return M.tocsr(), K.tocsr()
+
+    def step(self, u_curr, boundary_left=None, boundary_right=None):
         # 1 Project current state (RHS)
         b = self.M.dot(u_curr)
 
-        # 2. Solve for next state
+        # 2. Enforce Boundary Values explicitly on the RHS vector 'b'
+        # This overrides whatever M.dot(u_curr) calculated for the edges.
+        if boundary_left is not None:
+            b[0] = boundary_left
+        if boundary_right is not None:
+            b[-1] = boundary_right
+
+        # 3. Solve for next state
         return self.solve_A(b)
