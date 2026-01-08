@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_price_comparison(S_grid, numerical_price, analysical_price, title="Option Pricing"):
+def plot_price_comparison(S_grid, numerical_price, analytical_price, title="Option Pricing"):
     """Plots the Numerical vs Analysical solution side-by-side."""
     plt.figure(figsize=(10,6))
 
