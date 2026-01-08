@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # We solve for a Put (decaying boundary)
     u0 = get_put_payoff(sys.x_grid, K)
     # Enforcing the boundaries
-    u0[0] = 0.0; u0[-1] =0.0
+    u0[0] = K * np.exp(-r * T); u0[-1] =0.0
 
     # --- Execution --- #
     runner = SimulationRunner(sys, solver, u0)
