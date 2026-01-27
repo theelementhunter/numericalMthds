@@ -26,25 +26,39 @@ def test_initialization_attributes(basic_solver):
     assert sp.issparse(basic_solver.M)
     assert sp.issparse(basic_solver.K)
 
+
 def test_matrix_assignment_swap(basic_solver):
     """
     Ensures M and K are not swapped
 
     Physics Check
-    - K (Stiffness) represents 2nd derivative -> Main diag should be negative (-2)
-    - M (Mass) represents averaging -> Main diag should be positive (10)
+    - K (Stiffness) represents 2nd derivative -> Inner diag should be negative (-2)
+    - M (Mass) represents averaging -> Inner diag should be positive (10)
     """
 
     # Extract main diagonals
     diag_M = basic_solver.M.diagonal()
     diag_K = basic_solver.K.diagonal()
 
-    # Check Mass Matrix (M) - Should be ~10/12 (approx 0.83)
-    assert np.all(diag_M > 0), "Mass matrix M should have positive diagonals (10)"
-    assert diag_M[1] == pytest.approx(10.0/12.0), "M matrix values are incorrect"
+    # --- Check Mass Matrix (M) ---
+    # Should be positive (10/12) for averaging
+    # We check interior points specifically
+    assert np.all(diag_M[1:-1] > 0), "Mass matrix M should have positive diagonals (10)"
+    assert diag_M[1] == pytest.approx(10.0 / 12.0), "M matrix values are incorrect"
 
-    # Check Stiffness Matrix (K) - Should be negaive (-2/dx^2)
-    assert np.all(diag_K < 0), "Stiffness matrix K should have negative diagonals (-2)"
+    # Check boundary identity enforcement: M[0,0] and M[-1,-1] must be 1.0
+    assert diag_M[0] == 1.0, "M boundary at index 0 should be 1.0 for identity"
+    assert diag_M[-1] == 1.0, "M boundary at index -1 should be 1.0 for identity"
+
+    # --- Check Stiffness Matrix (K) ---
+    # Interior points should be negative (-2/dx^2)
+    interior_K = diag_K[1:-1]
+    assert np.all(interior_K < 0), "Inner stiffness matrix K should have negative diagonals (-2)"
+
+    # Check boundary zeroing: K[0,0] and K[-1,-1] must be 0.0
+    # This ensures (M - alpha*dt*K) reduces to I at the boundaries
+    assert diag_K[0] == 0.0, "Boundary K[0,0] should be 0.0"
+    assert diag_K[-1] == 0.0, "Boundary K[-1,-1] should be 0.0"
 
 def test_operator_construction(basic_solver):
     """Does A = M - alpha*dt*K have the right shape and properties?"""

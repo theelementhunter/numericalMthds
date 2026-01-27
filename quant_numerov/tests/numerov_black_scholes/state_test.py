@@ -8,9 +8,10 @@ class MockSystem:
         self.dt = dt
 
 class MockSolver:
-    def step(self, u_curr):
-        # Adds 1.0 to every grid point so we can easily track changes
-        return u_curr + 1.0
+    def step(self, u_curr, boundary_left=None, boundary_right=None):
+        # We must return the new array so 'u_curr' isn't None
+        next_u = u_curr + 1.0
+        return next_u
 
 @pytest.fixture # Fixtures are setup code that run before tests
 def basic_runner():
