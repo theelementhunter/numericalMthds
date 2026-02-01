@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 class Potential1D(ABC):
     """Abstract Base Class; Defines what a 1D Potential must look like."""
     @abstractmethod
-    def potential_matrix(self, matrix: np.ndarray) -> np.ndarray:
+    def potential_matrix(self) -> np.ndarray:
         pass
 
 
@@ -17,7 +17,7 @@ class PotentialWell(Potential1D):
         self.N = self.basis.N
         self.a = self.basis.a
 
-    def potential_matrix(self, matrix: np.ndarray) -> np.ndarray:
+    def potential_matrix(self) -> np.ndarray:
         #--- When k_i = k_j -> - V0*b / a ---#
         diagonal_elements = ( self.V0 * self.width ) / self.a
 
