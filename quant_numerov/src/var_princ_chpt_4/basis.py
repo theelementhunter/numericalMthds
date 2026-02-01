@@ -15,7 +15,8 @@ class PlaneWaveBasis():
         K = h_bar^2 * k^2 / 2m where h_bar^2/2m == 1
         :return: np.array
         """
-        kinetic_matrix = sparse.diags(diagonals=self.k_vector, offsets=0)
+        k_squared = self.k_vector ** 2
+        kinetic_matrix = sparse.diags(diagonals=k_squared, offsets=0)
         return kinetic_matrix
 
     def build_momentum_difference_matrix(self):
