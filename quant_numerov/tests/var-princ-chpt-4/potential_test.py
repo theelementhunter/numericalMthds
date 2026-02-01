@@ -27,3 +27,22 @@ def test_potential_matrix_values(shared_potential):
     print(shared_potential.potential_matrix()[0, 1])
 
     assert np.isclose(shared_potential.potential_matrix()[0, 1], expected_off), "Off-diagonal formula mismatch"
+
+def test_full_box_limit(shared_potential):
+    """If width == box_size, potential is constant -V0 everywhere."""
+    V0 = 10.0
+    # Diagonal should be -V0
+    assert np.allclose(np.diag(shared_potential.potential_matrix()), -V0), \
+        "Diagonal should be -V0 for full width well"
+
+    # Off-diagonal should be 0
+    # Sum of abs vals of off-diags should be near 0
+    matrix = shared_potential.potential_matrix()
+    np.fill_diagonal(matrix, 0)
+    assert np.allclose(matrix, 0,
+                       atol=1e-9), "Off-diagonals should be zero for constant potential"
+
+def test_hermicity(shared_potential):
+    """Hamiltonian must be Hermition for eigenvalues to be real numbers."""
+    matrix = shared_potential.potential_matrix()
+    assert np.allclose(matrix, matrix.T), "Potential Matrix is not symmetric. Fix that. Plz. And thxu."
