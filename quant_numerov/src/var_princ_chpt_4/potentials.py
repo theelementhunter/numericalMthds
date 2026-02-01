@@ -19,23 +19,25 @@ class PotentialWell(Potential1D):
 
     def potential_matrix(self) -> np.ndarray:
         #--- When k_i = k_j -> - V0*b / a ---#
-        diagonal_elements = ( self.V0 * self.width ) / self.a
+        diagonal_elements = - ( self.V0 * self.width ) / self.a
 
         diff_matrix = self.basis.build_momentum_difference_matrix()
 
         #--- Fixing DivisionByZero ---#
         q_to_0_limit = np.full_like(diff_matrix, 1.0)
+
         # Boolean Mask -> Where is q NOT zero
-        mask = np.abs(q_to_0_limit) > 1e-9
+        mask = np.abs(diff_matrix) > 1e-9
 
         # Pull out only values there the mask is True
-        safe_q = q_to_0_limit[mask]
+        safe_q = diff_matrix[mask]
 
         # Do our math on new safe matrix (No DivisionByZero)
-        safe_results = (-self.V0 / self.a)* ( np.sin((self.width * safe_q)/ 2.0) / (safe_q / 2.0) )
+        safe_results = ((-self.V0 / self.a) * np.sin((self.width * safe_q)/ 2.0) ) / (safe_q / 2.0)
 
         # Paste safe matrix back into
         q_to_0_limit[mask] = safe_results
+        print(q_to_0_limit)
 
         # --- Replace Diagonal Elements --- #
         np.fill_diagonal(q_to_0_limit, diagonal_elements)
