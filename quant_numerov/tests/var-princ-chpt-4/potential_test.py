@@ -6,7 +6,7 @@ from var_princ_chpt_4.potentials import PotentialWell
 @pytest.fixture(scope="function")
 def shared_potential():
     basis = PlaneWaveBasis(N=1, a=2) # 3x3 matrix
-    shared_potential = PotentialWell(basis=basis, width=1.0, V0= 1)
+    shared_potential = PotentialWell(basis=basis, width=2.0, V0= 10.0)
     return shared_potential
 
 
@@ -23,8 +23,6 @@ def test_potential_matrix_values(shared_potential):
     # Pick indices where you know the q-difference (e.g., k=0 vs k=1)
     q_val = shared_potential.basis.k_vector[1] - shared_potential.basis.k_vector[0]
     expected_off = -( (shared_potential.V0 / shared_potential.a) * np.sin(q_val * shared_potential.width / 2) ) / (q_val / 2)
-    print(expected_off)
-    print(shared_potential.potential_matrix()[0, 1])
 
     assert np.isclose(shared_potential.potential_matrix()[0, 1], expected_off), "Off-diagonal formula mismatch"
 

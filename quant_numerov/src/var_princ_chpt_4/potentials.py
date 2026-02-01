@@ -37,7 +37,6 @@ class PotentialWell(Potential1D):
 
         # Paste safe matrix back into
         q_to_0_limit[mask] = safe_results
-        print(q_to_0_limit)
 
         # --- Replace Diagonal Elements --- #
         np.fill_diagonal(q_to_0_limit, diagonal_elements)
