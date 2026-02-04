@@ -13,9 +13,9 @@ class Eigensolver:
             raise ValueError("System Hamiltonian is not built. Call sys.build_hamiltonian() first.")
 
         print("Diagonalizing Hamiltonian...")
-        energies, wfns = eig(sys.H)
+        energies, coeff = eig(sys.H)
         print("Populating system...")
         sys.eigenvalues = energies
-        sys.eigenvectors = wfns
+        sys.eigenvectors = coeff
 
         print("Solution Reached.")
