@@ -24,5 +24,5 @@ class QuantumSys1D:
         V = self.potential.build_potential_matrix()
 
         print("Building Full Hamiltonian Matrix...")
-        self.H = T + V
+        self.Hamiltonian = T + V
         print("Hamiltonian Built.")
