@@ -26,3 +26,27 @@ class QuantumSys1D:
         print("Building Full Hamiltonian Matrix...")
         self.Hamiltonian = T + V
         print("Hamiltonian Built.")
+
+    def get_wfn(self, state_index: int, xgrid: np.ndarray) -> np.ndarray:
+        # No state lower than the ground state
+        if state_index < 0:
+            raise ValueError("Invalid state_index. Ground State (0) is the lowest state.")
+
+        # Broadcast grids and coefficients for vectorization
+        k_vec_broadcast = self.basis.kvector[None, :]        # Row of k-points
+        x_grid_broadcast = xgrid[:, None]                    # Column of positions
+        coeff = self.eigenvectors[:, state_index]
+
+        #
+        basis_matrix = np.exp(1j * x_grid_broadcast * k_vec_broadcast)
+
+        # Weighted Sum
+        # Matrix multiplication (@) does the sum over the 'k' dimension automatically
+        psi = basis_matrix @ coeff
+
+        # Normalization
+        psi_normalized = psi * np.sqrt(self.basis.a)
+        return psi_normalized
+
+
+
