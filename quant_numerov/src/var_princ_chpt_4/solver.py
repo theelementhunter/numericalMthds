@@ -1,4 +1,4 @@
-from scipy.linalg import eig
+from scipy.linalg import eigh
 from system import QuantumSys1D
 
 
@@ -9,11 +9,11 @@ class Eigensolver:
         Diagonalizes the system's Hamiltonian
         Populates sys.eigenvalues and sys.eigenvectors.
         """
-        if sys.H is None:
+        if sys.Hamiltonian is None:
             raise ValueError("System Hamiltonian is not built. Call sys.build_hamiltonian() first.")
 
         print("Diagonalizing Hamiltonian...")
-        energies, coeff = eig(sys.H)
+        energies, coeff = eigh(sys.Hamiltonian)
         print("Populating system...")
         sys.eigenvalues = energies
         sys.eigenvectors = coeff

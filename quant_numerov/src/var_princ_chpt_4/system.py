@@ -21,7 +21,7 @@ class QuantumSys1D:
         T = self.basis.build_kinetic_matrix()
 
         print("Building Potential Energy Matrix...")
-        V = self.potential.build_potential_matrix()
+        V = self.potential.potential_matrix()
 
         print("Building Full Hamiltonian Matrix...")
         self.Hamiltonian = T + V
@@ -33,7 +33,7 @@ class QuantumSys1D:
             raise ValueError("Invalid state_index. Ground State (0) is the lowest state.")
 
         # Broadcast grids and coefficients for vectorization
-        k_vec_broadcast = self.basis.kvector[None, :]        # Row of k-points
+        k_vec_broadcast = self.basis.k_vector[None, :]        # Row of k-points
         x_grid_broadcast = xgrid[:, None]                    # Column of positions
         coeff = self.eigenvectors[:, state_index]
 
@@ -45,7 +45,7 @@ class QuantumSys1D:
         psi = basis_matrix @ coeff
 
         # Normalization
-        psi_normalized = psi * np.sqrt(self.basis.a)
+        psi_normalized = psi * (1 / np.sqrt(self.basis.a))
         return psi_normalized
 
 
