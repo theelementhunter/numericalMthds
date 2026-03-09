@@ -1,0 +1,57 @@
+# =========================
+# IDEs & Editor Files
+# =========================
+# Ignore JetBrains workspace settings (PyCharm & CLion)
+.idea/
+*.iml
+
+# =========================
+# C++ & CLion Build Artifacts
+# =========================
+# CLion/CMake default build directories
+cmake-build-*/
+build/
+out/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.cmake
+
+# Compiled Object files, Static and Dynamic libs
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# =========================
+# Python & PyCharm Artifacts
+# =========================
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+.venv/
+.env/
+
+# Jupyter Notebook checkpoints (if you use them)
+.ipynb_checkpoints/
+
+# =========================
+# OS Generated Files
+# =========================
+.DS_Store
+Thumbs.db
