@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 # We import our "Engine" parts
 # (If these fail, make sure you ran 'pip install -e .' in the terminal)
-from quant_numerov.src.numerov_schrod_eqn.potentials import HarmonicOscillator
-from quant_numerov.src.numerov_schrod_eqn.solver import NumerovSolver
+from python.src.numerov_schrod_eqn.potentials import HarmonicOscillator
+from python.src.numerov_schrod_eqn.solver import NumerovSolver
 
 
 def reconstruct_full_wavefunction(result, grid):
