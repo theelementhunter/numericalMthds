@@ -11,6 +11,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 4. Tell CMake to create an executable program from your source files
 # The first word is the name of the executable it will build.
 # Everything after that is the list of .cpp files it needs to compile.
-add_executable(NumericalMethodsCPP
-    main.cpp
-)
+add_executable(spin_model_run heisenburg_spin_model/main.cpp)
