@@ -62,7 +62,30 @@ for i in range(num_hops):
 
 full_hamiltonian = (J / 2) * np.sum(H_total, axis=0)
 
-print(full_hamiltonian)
+# Initializing excitation on site 1
+
+# Occupied site
+occupied = np.array([0,1])
+
+# Empty site
+empty = np.array([1,0])
+
+#Initializaiton List
+init_list = [1]
+
+# Safeguard against non-physical shenanigans
+if len(init_list) < 1 or len(init_list) > N or max(init_list) > N:
+    print("Invalid list. Initializing on site 1.")
+    init_list = [1]
+
+kron_list_init = [empty] * N
+
+# Populating the correct states with excitations
+for i in init_list:
+    kron_list_init[i-1] = occupied
+
+# Another Kronecker product!
+init_array = reduce(np.kron, kron_list_init)
 
 
 
