@@ -87,5 +87,15 @@ for i in init_list:
 # Another Kronecker product!
 init_array = reduce(np.kron, kron_list_init)
 
+# Schrodinger Time Evolution: Time Evolves the State Vector
 
+# Timestep (what's the timescale?)
+t = 1
 
+# Evolution time
+psi_t = expm(-1j * full_hamiltonian * t) @ init_array
+
+# Measuring physical probabilities at time t:
+probabilities = np.abs(psi_t)**2
+print(f"\nProbabilities of all {2**N} states at t={t}:")
+print(np.round(probabilities, 3))
