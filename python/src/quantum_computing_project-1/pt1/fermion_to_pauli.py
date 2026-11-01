@@ -40,10 +40,9 @@ if N <= 1:
     raise ValueError("Error: Number of sites cannot be less than 2.")
 
 H_total = []
-for i in range(1, tot_terms-1):
+for i in range(num_hops):
     #X matrices
-    kron_list_X = [0] * N
-    kron_list_X = [I_matrix if x == 0 else x for x in kron_list_X]
+    kron_list_X = [I_matrix] * N
     kron_list_X[i-1] = X_matrix
     kron_list_X[i] = X_matrix
 
@@ -52,17 +51,16 @@ for i in range(1, tot_terms-1):
     H_total.append(H_partly_X)
 
     # Y matrices
-    kron_list_Y = [0] * N
-    kron_list_Y = [I_matrix if x == 0 else x for x in kron_list_Y]
+    kron_list_Y = [I_matrix] * N
     kron_list_Y[i - 1] = Y_matrix
     kron_list_Y[i] = Y_matrix
 
     # Applying kronecker delta
-    H_partly_Y = reduce(np.kron, kron_list_X)
+    H_partly_Y = reduce(np.kron, kron_list_Y)
     H_total.append(H_partly_Y)
 
 
-full_hamiltonian = np.sum(H_total, axis=0)
+full_hamiltonian = (J / 2) * np.sum(H_total, axis=0)
 
 print(full_hamiltonian)
 
