@@ -43,8 +43,8 @@ H_total = []
 for i in range(num_hops):
     #X matrices
     kron_list_X = [I_matrix] * N
-    kron_list_X[i-1] = X_matrix
     kron_list_X[i] = X_matrix
+    kron_list_X[i + 1] = X_matrix
 
     # Applying kronecker delta
     H_partly_X = reduce(np.kron, kron_list_X)
@@ -52,8 +52,8 @@ for i in range(num_hops):
 
     # Y matrices
     kron_list_Y = [I_matrix] * N
-    kron_list_Y[i - 1] = Y_matrix
     kron_list_Y[i] = Y_matrix
+    kron_list_Y[i + 1] = Y_matrix
 
     # Applying kronecker delta
     H_partly_Y = reduce(np.kron, kron_list_Y)
